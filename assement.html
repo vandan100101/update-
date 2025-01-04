@@ -103,62 +103,119 @@
       ></a-light>
 
       <a-entity position="-1.25442 1.9 3.90012">
-        <a-box
-          height="1"
-          width="1"
-          material=""
-          geometry=""
-          scale="1.35 0.98 0.02"
-        >
-          <a-text
-            value="questions"
-            text="width: 1; height: -0.28"
-            rotation="-180.000 1.098 -180.000"
-            position="0.086 0.327 -1.029"
-            id="question"
-          >
-            <a-text
-              value="a"
-              text="width: 1"
-              position="-0.229 -0.185 0"
-              id="choiceA"
-            >
-              <a-box
-                position="0.340 0 0"
-                id="choiceBoxA"
-                scale="0.500 0.090 1"
-                visible="false"
-              ></a-box>
-            </a-text>
-            <a-text
-              value="b"
-              text="width: 1"
-              position="-0.226 -0.362 0"
-              id="choiceB"
-            >
-              <a-box
-                position="0.340 0 0"
-                id="choiceBoxB"
-                scale="0.500 0.090 1"
-                visible="false"
-              ></a-box>
-            </a-text>
-            <a-text
-              value="c"
-              text="width: 1"
-              position="-0.223 -0.545 0"
-              id="choiceC"
-            >
-              <a-box
-                position="0.340 0 0"
-                id="choiceBoxC"
-                scale="0.500 0.090 1"
-                visible="false"
-              ></a-box>
-            </a-text>
-          </a-text>
-        </a-box>
+        <a-entity id="hologram"
+                position="0 0.580 0.515"
+                rotation="0 180.000 0"
+                text="value: Loading...; align: center; width: 3;"
+                material="opacity: 0.7; color: #00ffff;"
+                geometry="primitive: plane; height: 1; width: 3;">
+        </a-entity>
+
+        <!-- Container for the choice buttons -->
+        <a-entity id="choices-container" position="0 -0.439 -0.102" scale="0.730  0.600 1"></a-entity>
       </a-entity>
     </a-scene>
+    <script>
+      let questions = [];
+      let currentQuestionIndex = 0;
+      let score = 0;
+    
+      const hologram = document.querySelector("#hologram");
+      const choicesContainer = document.querySelector("#choices-container");
+    
+      // Shuffle function to randomize the questions array
+      function shuffleQuestions(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]]; // Swap elements
+        }
+      }
+    
+      // Load questions from the JSON file
+      async function loadQuestions() {
+        const response = await fetch("questions.json");
+        questions = await response.json();
+        
+        // Shuffle the questions to randomize their order
+        shuffleQuestions(questions);
+    
+        if (questions.length > 0) {
+          loadQuestion(currentQuestionIndex);
+        } else {
+          hologram.setAttribute("text", `value: No questions available.`);
+        }
+      }
+    
+      // Display the current question on the hologram
+      function loadQuestion(index) {
+        const question = questions[index];
+        hologram.setAttribute("text", `value: ${question.question}`);
+    
+        // Clear existing buttons
+        choicesContainer.innerHTML = '';
+    
+        // Create buttons dynamically based on the number of choices
+        question.answers.forEach((answer, i) => {
+          const button = document.createElement("a-entity");
+          button.setAttribute("class", "choice-button");
+          button.setAttribute("position", `0 ${1 - i * 0.6} 0.388`);
+          button.setAttribute("rotation", "-180 0 -180");  // Rotate button as requested
+    
+          const buttonPlane = document.createElement("a-plane");
+          buttonPlane.setAttribute("color", "#007bff");
+          buttonPlane.setAttribute("height", "0.5");
+          buttonPlane.setAttribute("width", "1.5");
+    
+          const buttonText = document.createElement("a-text");
+          buttonText.setAttribute("value", `${String.fromCharCode(65 + i)}: ${answer}`);
+          buttonText.setAttribute("align", "center");
+          buttonText.setAttribute("position", "0 0 0.1");
+    
+          button.appendChild(buttonPlane);
+          button.appendChild(buttonText);
+    
+          // Add event listener to the button
+          button.addEventListener("click", () => checkAnswer(i));
+    
+          choicesContainer.appendChild(button);
+        });
+      }
+    
+      // Handle button clicks and check the answer
+      function checkAnswer(answerIndex) {
+        const correctIndex = questions[currentQuestionIndex].correct;
+    
+        if (answerIndex === correctIndex) {
+          score++;
+        }
+    
+        currentQuestionIndex++;
+    
+        if (currentQuestionIndex < questions.length) {
+          loadQuestion(currentQuestionIndex);
+        } else {
+          displayFinalScore();
+        }
+      }
+    
+      // Display the final score on the hologram
+      function displayFinalScore() {
+        hologram.setAttribute(
+          "text",
+          `value: Quiz finished!\nYour score: ${score}/${questions.length}`
+        );
+        choicesContainer.innerHTML = ''; // Clear the buttons
+    
+        // Redirect to index.html and pass the score as a URL parameter
+        setTimeout(() => {
+          window.location.href = `index.html?score=${score}`;
+        }, 5000); // Wait 2 seconds before redirecting
+      }
+    
+      // Load the questions on page load
+      loadQuestions();
+    </script>
+    
+    
   </body>
 </html>

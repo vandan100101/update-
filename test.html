@@ -1,61 +1,109 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <title>Responsive A-Frame Carousel with Buttons</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <title>Quiz Hologram</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   </head>
   <body>
-    <!-- A-Frame Scene -->
-    <a-scene embedded style="width: 100%; height: 400px">
-      <!-- Camera -->
-      <a-entity camera look-controls position="0 1.6 5"></a-entity>
-
-      <!-- Carousel container -->
-      <a-entity id="carousel" position="0 1.6 -3">
-        <!-- Carousel items (planes for photos) -->
-        <a-plane src="#photo1" height="2" width="2" position="-2 0 0"></a-plane>
-        <a-plane src="#photo2" height="2" width="2" position="0 0 0"></a-plane>
-        <a-plane src="#photo3" height="2" width="2" position="2 0 0"></a-plane>
+    <a-scene>
+      <!-- Hologram for displaying the question -->
+      <a-entity id="hologram"
+                position="0 2 -3"
+                text="value: Loading...; align: center; width: 3;"
+                material="opacity: 0.7; color: #00ffff;"
+                geometry="primitive: plane; height: 1; width: 3;">
       </a-entity>
 
-      <!-- Floor -->
-      <a-plane
-        rotation="-90 0 0"
-        width="10"
-        height="10"
-        color="#7BC8A4"
-      ></a-plane>
+      <!-- Container for the choice buttons -->
+      <a-entity id="choices-container" position="0 1 -3"></a-entity>
+
+      <a-camera>
+        <a-cursor></a-cursor>
+      </a-camera>
     </a-scene>
 
-    <!-- Photo assets -->
-    <a-assets>
-      <img id="photo1" src="photo1.jpg" />
-      <img id="photo2" src="photo2.jpg" />
-      <img id="photo3" src="photo3.jpg" />
-    </a-assets>
-
-    <!-- Rotation buttons -->
-    <div style="text-align: center; margin-top: 20px">
-      <button onclick="rotateCarousel(-60)">Rotate Left</button>
-      <button onclick="rotateCarousel(60)">Rotate Right</button>
-    </div>
-
     <script>
-      // JavaScript to handle carousel rotation
-      let carousel = document.getElementById("carousel");
-      let angle = 0;
+      let questions = [];
+      let currentQuestionIndex = 0;
+      let score = 0;
 
-      function rotateCarousel(degree) {
-        angle += degree;
-        carousel.setAttribute("animation", {
-          property: "rotation",
-          to: `0 ${angle} 0`,
-          dur: 500, // Duration of the animation in milliseconds
-          easing: "easeInOutQuad", // Easing function for smooth animation
+      const hologram = document.querySelector("#hologram");
+      const choicesContainer = document.querySelector("#choices-container");
+
+      // Load questions from the JSON file
+      async function loadQuestions() {
+        const response = await fetch("questions.json");
+        questions = await response.json();
+        if (questions.length > 0) {
+          loadQuestion(currentQuestionIndex);
+        } else {
+          hologram.setAttribute("text", `value: No questions available.`);
+        }
+      }
+
+      // Display the current question on the hologram
+      function loadQuestion(index) {
+        const question = questions[index];
+        hologram.setAttribute("text", `value: ${question.question}`);
+
+        // Clear existing buttons
+        choicesContainer.innerHTML = '';
+
+        // Create buttons dynamically based on the number of choices
+        question.answers.forEach((answer, i) => {
+          const button = document.createElement("a-entity");
+          button.setAttribute("class", "choice-button");
+          button.setAttribute("position", `0 ${1 - i * 0.6} -3`);
+
+          const buttonPlane = document.createElement("a-plane");
+          buttonPlane.setAttribute("color", "#007bff");
+          buttonPlane.setAttribute("height", "0.5");
+          buttonPlane.setAttribute("width", "1.5");
+
+          const buttonText = document.createElement("a-text");
+          buttonText.setAttribute("value", `${String.fromCharCode(65 + i)}: ${answer}`);
+          buttonText.setAttribute("align", "center");
+          buttonText.setAttribute("position", "0 0 0.1");
+
+          button.appendChild(buttonPlane);
+          button.appendChild(buttonText);
+
+          // Add event listener to the button
+          button.addEventListener("click", () => checkAnswer(i));
+
+          choicesContainer.appendChild(button);
         });
       }
+
+      // Handle button clicks and check the answer
+      function checkAnswer(answerIndex) {
+        const correctIndex = questions[currentQuestionIndex].correct;
+
+        if (answerIndex === correctIndex) {
+          score++;
+        }
+
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex < questions.length) {
+          loadQuestion(currentQuestionIndex);
+        } else {
+          displayFinalScore();
+        }
+      }
+
+      // Display the final score on the hologram
+      function displayFinalScore() {
+        hologram.setAttribute(
+          "text",
+          `value: Quiz finished!\nYour score: ${score}/${questions.length}`
+        );
+        choicesContainer.innerHTML = ''; // Clear the buttons
+      }
+
+      // Load the questions on page load
+      loadQuestions();
     </script>
   </body>
 </html>
