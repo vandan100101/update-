@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.3.0/dist/aframe-environment-component.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/rdub80/aframe-gui@v0.3.2/dist/aframe-gui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.1.0/dist/aframe-physics-system.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/LugawPlain/aframe-super-hands-component@master/dist/super-hands.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/schteppe/cannon.js/build/cannon.min.js"></script>
+    <script src="https://unpkg.com/super-hands/dist/super-hands.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.1.0/dist/aframe-physics-system.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@^4.1.1/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-extras/dist/aframe-physics-extras.min.js"></script>
+
+    <!-- Components -->
+    <script src="components/cursor_listener.js"></script>
+    <script src="components/error.handler.js"></script>
+    <script src="components/my-model.js"></script>
+    <script src="components/environment_component.js"></script>
+    <script src="components/grab_connect-toggle.js"></script>
+  </head>
+  <body>
+    <a-scene
+      id="screen1 introduction"
+      environment="preset: forest;"
+      cursor="rayOrigin: mouse"
+      physics="driver: local; 
+                      gravity: -9.8; 
+                      maxSubSteps: 2;
+                      fixedTimeStep: 1/60;
+                      iterations: 10;"
+    >
+      <!-- Define the camera with a cursor attached -->
+      <a-entity
+        id="camera"
+        camera
+        position="-1.277 1.9 2.414"
+        rotation="0 -180 0"
+        look-controls="pointerLockEnabled: true"
+      >
+        <a-cursor
+          super-hands="colliderEvent: raycaster-intersection;
+              colliderEventProperty: els;
+              colliderEndEvent: raycaster-intersection-cleared;
+              colliderEndEventProperty: clearedEls;"
+          static-body="shape: sphere; sphereRadius: 0.001"
+          color="white"
+        >
+        </a-cursor>
+      </a-entity>
+
+      <!-- ambient sound -->
+      <a-sound
+        src="url(assets\garden-ambience-236744.mp3)"
+        position="0 2 0"
+        loop="true"
+        autoplay="true"
+        volume="0.4"
+      >
+      </a-sound>
+
+      <!-- MIXXIN FOR GRABBING -->
+      <a-mixin
+        id="grabme"
+        geometry="primitive: box; width: 0.5; height: 0.5; depth: 0.5"
+        hoverable
+        grabbable
+        stretchable
+        draggable
+        droppable
+        shadow
+        event-set__dragdrop="_event: drag-drop; geometry.primitive: sphere; geometry.radius: 0.25"
+        event-set__hoveron="_event: hover-start; material.opacity: 0.7; transparent: true"
+        event-set__hoveroff="_event: hover-end; material.opacity: 1; transparent: false"
+        event-set__dragon="_event: dragover-start; material.wireframe: true"
+        event-set__dragoff="_event: dragover-end; material.wireframe: false"
+      >
+      </a-mixin>
+
+      <a-assets>
+        <a-assets-item id="room" src="assets/classroom.glb"></a-assets-item>
+      </a-assets>
+
+      <a-entity
+        gltf-model="assets/classroom.glb"
+        position="0 0.15 0"
+        scale="0.015 0.015 0.015"
+        id="classroom"
+      ></a-entity>
+
+      <a-light
+        type="directional"
+        position="-1.707 1.900 2.487"
+        intensity="1"
+        castShadow="true"
+      ></a-light>
+
+      <a-entity position="-1.25442 1.9 3.90012">
+        <a-box
+          height="1"
+          width="1"
+          material=""
+          geometry=""
+          scale="1.35 0.98 0.02"
+        >
+          <a-text
+            value="questions"
+            text="width: 1; height: -0.28"
+            rotation="-180.000 1.098 -180.000"
+            position="0.086 0.327 -1.029"
+            id="question"
+          >
+            <a-text
+              value="a"
+              text="width: 1"
+              position="-0.229 -0.185 0"
+              id="choiceA"
+            >
+              <a-box
+                position="0.340 0 0"
+                id="choiceBoxA"
+                scale="0.500 0.090 1"
+                visible="false"
+              ></a-box>
+            </a-text>
+            <a-text
+              value="b"
+              text="width: 1"
+              position="-0.226 -0.362 0"
+              id="choiceB"
+            >
+              <a-box
+                position="0.340 0 0"
+                id="choiceBoxB"
+                scale="0.500 0.090 1"
+                visible="false"
+              ></a-box>
+            </a-text>
+            <a-text
+              value="c"
+              text="width: 1"
+              position="-0.223 -0.545 0"
+              id="choiceC"
+            >
+              <a-box
+                position="0.340 0 0"
+                id="choiceBoxC"
+                scale="0.500 0.090 1"
+                visible="false"
+              ></a-box>
+            </a-text>
+          </a-text>
+        </a-box>
+      </a-entity>
+    </a-scene>
+  </body>
+</html>
